@@ -1,0 +1,14 @@
+{
+  "title": "HIPAA Healthcare Privacy and Security Requirements",
+  "text": "The Health Insurance Portability and Accountability Act (HIPAA) establishes comprehensive privacy and security standards for protected health information (PHI) in the healthcare industry. Covered entities, including healthcare providers, health plans, and healthcare clearinghouses, must implement administrative, physical, and technical safeguards to protect PHI.\n\nAdministrative safeguards include workforce training, access management, and incident response procedures. Organizations must designate a privacy officer and security officer, conduct regular risk assessments, and implement policies and procedures for handling PHI.\n\nPhysical safeguards involve controlling physical access to facilities and workstations. This includes facility access controls, workstation use policies, and device and media controls. Organizations must implement policies for the receipt and removal of hardware and electronic media containing PHI.\n\nTechnical safeguards require organizations to implement access controls, audit controls, integrity controls, and transmission security. Access controls must include unique user identification, automatic logoff, and encryption and decryption mechanisms. Audit controls must record and examine activity in information systems containing PHI.\n\nOrganizations must provide individuals with notice of privacy practices and honor their rights regarding their health information. Individuals have the right to access, amend, and receive an accounting of disclosures of their PHI. Organizations must obtain written authorization for uses and disclosures not otherwise permitted.\n\nBreach notification requirements mandate that organizations notify affected individuals, the Department of Health and Human Services, and potentially the media of any breach of unsecured PHI. Notifications must be provided without unreasonable delay and within 60 days of discovery.",
+  "source": "scripts/corpus/hipaa_healthcare_privacy.json",
+  "uri": "https://example.com/hipaa-healthcare-privacy-requirements",
+  "metadata": {
+    "jurisdiction": "United States",
+    "topic": "Healthcare Privacy",
+    "target_audience": "Healthcare Organizations",
+    "effective_date": "1996-08-21",
+    "document_type": "Federal Law",
+    "keywords": ["HIPAA", "healthcare", "privacy", "security", "PHI", "breach notification"]
+  }
+}

@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Voice Policy Assistant - Test Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .info { border-left: 4px solid #17a2b8; }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .status.healthy { background: #d4edda; color: #155724; }
+        .status.unhealthy { background: #f8d7da; color: #721c24; }
+        .status.loading { background: #d1ecf1; color: #0c5460; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .websocket-status {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .voice-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .record-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #dc3545;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .record-button.recording {
+            background: #28a745;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #666;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎤 AI Voice Policy Assistant</h1>
+        <p>Test Interface - Validate All Features</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('overview')">📊 Overview</button>
+        <button class="tab" onclick="showTab('auth')">🔐 Authentication</button>
+        <button class="tab" onclick="showTab('chat')">💬 Chat</button>
+        <button class="tab" onclick="showTab('voice')">🎤 Voice</button>
+        <button class="tab" onclick="showTab('corpus')">📚 Documents</button>
+        <button class="tab" onclick="showTab('admin')">⚙️ Admin</button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div id="overview" class="tab-content active">
+        <div class="section">
+            <h2>🚀 System Status</h2>
+            <div id="system-status">
+                <button onclick="checkSystemHealth()">Check System Health</button>
+                <div id="health-result"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 Quick Stats</h2>
+            <div class="grid">
+                <div>
+                    <h3>API Endpoints</h3>
+                    <ul>
+                        <li>✅ Health Check: <code>/healthz</code></li>
+                        <li>🔐 Auth: <code>/auth/signup</code>, <code>/auth/login</code></li>
+                        <li>💬 Chat: <code>/chat/</code> (POST)</li>
+                        <li>🎤 Voice: <code>/ws/audio</code> (WebSocket)</li>
+                        <li>📚 Upload Doc: <code>/corpus/doc</code> (POST)</li>
+                        <li>📚 Search Docs: <code>/corpus/search</code> (POST)</li>
+                        <li>📚 List Docs: <code>/corpus/docs</code> (GET)</li>
+                        <li>⚙️ System Status: <code>/admin/system-status</code></li>
+                        <li>⚙️ Organizations: <code>/admin/organizations</code></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Services</h3>
+                    <div id="service-status">
+                        <div class="status loading">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authentication Tab -->
+    <div id="auth" class="tab-content">
+        <div class="section">
+            <h2>🔐 User Authentication</h2>
+            
+            <div class="form-group">
+                <label for="auth-email">Email:</label>
+                <input type="email" id="auth-email" value="test@example.com" placeholder="Enter email">
+            </div>
+            
+            <div class="form-group">
+                <label for="auth-password">Password:</label>
+                <input type="password" id="auth-password" value="testpassword123" placeholder="Enter password">
+            </div>
+            
+            <div class="form-group">
+                <label for="auth-org-name">Organization Name:</label>
+                <input type="text" id="auth-org-name" value="Test Organization" placeholder="Enter organization name">
+            </div>
+
+            <div class="form-group">
+                <button onclick="registerUser()">Register User</button>
+                <button onclick="loginUser()">Login User</button>
+                <button onclick="logoutUser()">Logout</button>
+            </div>
+
+            <div id="auth-result" class="result"></div>
+            
+            <div class="form-group">
+                <h3>Current Token:</h3>
+                <textarea id="current-token" rows="3" readonly placeholder="JWT token will appear here after login"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Tab -->
+    <div id="chat" class="tab-content">
+        <div class="section">
+            <h2>💬 Chat Interface</h2>
+            
+            <div class="form-group">
+                <label for="chat-message">Message:</label>
+                <textarea id="chat-message" rows="3" placeholder="Ask a question about policies or documents..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <button onclick="sendChatMessage()">Send Message</button>
+                <button onclick="clearChatHistory()">Clear History</button>
+            </div>
+
+            <div class="form-group">
+                <h3>Chat History:</h3>
+                <div id="chat-history" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Tab -->
+    <div id="voice" class="tab-content">
+        <div class="section">
+            <h2>🎤 Voice Interface</h2>
+            
+            <div class="websocket-status">
+                <strong>WebSocket Status:</strong> <span id="ws-status">Disconnected</span>
+                <button onclick="connectWebSocket()">Connect</button>
+                <button onclick="disconnectWebSocket()">Disconnect</button>
+            </div>
+
+            <div class="voice-controls">
+                <button id="record-btn" class="record-button" onclick="toggleRecording()">🎤</button>
+                <span id="recording-status">Click to start recording</span>
+            </div>
+
+            <div class="form-group">
+                <h3>Voice Input:</h3>
+                <textarea id="voice-input" rows="3" readonly placeholder="Voice transcription will appear here..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <h3>Voice Response:</h3>
+                <div id="voice-response" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Corpus Tab -->
+    <div id="corpus" class="tab-content">
+        <div class="section">
+            <h2>📚 Document Management</h2>
+            
+            <div class="form-group">
+                <label for="doc-title">Document Title:</label>
+                <input type="text" id="doc-title" value="Sample Policy Document" placeholder="Enter document title">
+            </div>
+
+            <div class="form-group">
+                <label for="doc-content">Document Content:</label>
+                <textarea id="doc-content" rows="6" placeholder="Paste or type document content here...">This is a sample policy document for testing purposes. It contains information about company policies, procedures, and guidelines that employees should follow.</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="search-query">Search Query:</label>
+                <input type="text" id="search-query" value="policy" placeholder="Enter search terms...">
+            </div>
+
+            <div class="form-group">
+                <button onclick="uploadDocument()">Upload Document</button>
+                <button onclick="searchDocuments()">Search Documents</button>
+                <button onclick="listDocuments()">List All Documents</button>
+            </div>
+
+            <div id="corpus-result" class="result"></div>
+        </div>
+    </div>
+
+    <!-- Admin Tab -->
+    <div id="admin" class="tab-content">
+        <div class="section">
+            <h2>⚙️ Administration</h2>
+            
+            <div class="form-group">
+                <button onclick="getSystemMetrics()">Get System Metrics</button>
+                <button onclick="getUserStats()">Get User Statistics</button>
+                <button onclick="getServiceLogs()">Get Service Logs</button>
+            </div>
+
+            <div id="admin-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let authToken = null;
+        let wsConnection = null;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        // Tab management
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to selected tab
+            event.target.classList.add('active');
+        }
+
+        // System health check
+        async function checkSystemHealth() {
+            try {
+                const response = await fetch('http://localhost:8000/healthz');
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('health-result');
+                resultDiv.innerHTML = `<div class="result success">${JSON.stringify(data, null, 2)}</div>`;
+                
+                // Update service status
+                updateServiceStatus(data.services);
+            } catch (error) {
+                document.getElementById('health-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Update service status display
+        function updateServiceStatus(services) {
+            const statusDiv = document.getElementById('service-status');
+            statusDiv.innerHTML = '';
+            
+            for (const [service, status] of Object.entries(services)) {
+                const statusClass = status === 'healthy' ? 'healthy' : 
+                                  status === 'loading' ? 'loading' : 'unhealthy';
+                statusDiv.innerHTML += `<div class="status ${statusClass}">${service}: ${status}</div>`;
+            }
+        }
+
+        // Authentication functions
+        async function registerUser() {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const orgName = document.getElementById('auth-org-name').value || 'Test Organization';
+            
+            try {
+                const response = await fetch('http://localhost:8000/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, org_name: orgName })
+                });
+                
+                const data = await response.json();
+                document.getElementById('auth-result').innerHTML = `<div class="result success">${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                document.getElementById('auth-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loginUser() {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            
+            try {
+                const response = await fetch('http://localhost:8000/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                if (data.access_token) {
+                    authToken = data.access_token;
+                    // Store token in localStorage for WebSocket authentication
+                    localStorage.setItem('jwt_token', data.access_token);
+                    document.getElementById('current-token').value = authToken;
+                    document.getElementById('auth-result').innerHTML = `<div class="result success">Login successful! Token stored.</div>`;
+                } else {
+                    document.getElementById('auth-result').innerHTML = `<div class="result error">Login failed: ${JSON.stringify(data)}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('auth-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function logoutUser() {
+            authToken = null;
+            // Clear token from localStorage
+            localStorage.removeItem('jwt_token');
+            document.getElementById('current-token').value = '';
+            document.getElementById('auth-result').innerHTML = `<div class="result info">Logged out. Token cleared.</div>`;
+        }
+
+        // Chat functions
+        async function sendChatMessage() {
+            if (!authToken) {
+                document.getElementById('chat-history').innerHTML = `<div class="result error">Please login first to use chat.</div>`;
+                return;
+            }
+            
+            const message = document.getElementById('chat-message').value;
+            if (!message.trim()) return;
+            
+            try {
+                const response = await fetch('http://localhost:8000/chat/', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ text: message })
+                });
+                
+                const data = await response.json();
+                
+                // Add to chat history
+                const chatHistory = document.getElementById('chat-history');
+                const timestamp = new Date().toLocaleTimeString();
+                chatHistory.innerHTML += `
+                    <div><strong>[${timestamp}] You:</strong> ${message}</div>
+                    <div><strong>[${timestamp}] Assistant:</strong> ${data.response || JSON.stringify(data)}</div>
+                    <hr>
+                `;
+                
+                // Clear input
+                document.getElementById('chat-message').value = '';
+            } catch (error) {
+                document.getElementById('chat-history').innerHTML += `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function clearChatHistory() {
+            document.getElementById('chat-history').innerHTML = '';
+        }
+
+        // Voice functions
+        function connectWebSocket() {
+            try {
+                // Get JWT token from localStorage (set after login)
+                const token = localStorage.getItem('jwt_token');
+                if (!token) {
+                    document.getElementById('ws-status').textContent = 'Please log in first';
+                    document.getElementById('ws-status').style.color = 'red';
+                    return;
+                }
+                
+                wsConnection = new WebSocket('ws://localhost:8000/ws/audio?session_id=' + Date.now() + '&token=' + token);
+                
+                wsConnection.onopen = function() {
+                    document.getElementById('ws-status').textContent = 'Connected';
+                    document.getElementById('ws-status').style.color = 'green';
+                };
+                
+                wsConnection.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    document.getElementById('voice-response').innerHTML = `<div class="result success">${JSON.stringify(data, null, 2)}</div>`;
+                };
+                
+                wsConnection.onclose = function() {
+                    document.getElementById('ws-status').textContent = 'Disconnected';
+                    document.getElementById('ws-status').style.color = 'red';
+                };
+                
+                wsConnection.onerror = function(error) {
+                    document.getElementById('ws-status').textContent = 'Error';
+                    document.getElementById('ws-status').style.color = 'red';
+                };
+            } catch (error) {
+                document.getElementById('ws-status').textContent = 'Connection failed';
+                document.getElementById('ws-status').style.color = 'red';
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (wsConnection) {
+                wsConnection.close();
+                wsConnection = null;
+            }
+        }
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    // Try different MIME types for better browser compatibility
+                    const supportedTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg'];
+                    let selectedMimeType = 'audio/webm'; // fallback
+                    for (const type of supportedTypes) {
+                        if (MediaRecorder.isTypeSupported(type)) {
+                            selectedMimeType = type;
+                            break;
+                        }
+                    }
+                    
+                    console.log(`Using audio format: ${selectedMimeType}`);
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: selectedMimeType });
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = function(event) {
+                        if (event.data.size > 0) {
+                            console.log('Audio data available, size:', event.data.size);
+                            // Convert audio data to base64 and send immediately
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const base64Audio = reader.result.split(',')[1]; // Remove data:audio/webm;base64, prefix
+                                console.log('Sending audio chunk, data length:', base64Audio.length);
+                                
+                                if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+                                    wsConnection.send(JSON.stringify({
+                                        type: 'audio_chunk',
+                                        data: base64Audio,
+                                        format: selectedMimeType.split('/')[1], // Extract format from MIME type
+                                        sample_rate: 16000
+                                    }));
+                                    
+                                    // Send process_audio message to trigger transcription
+                                    setTimeout(() => {
+                                        if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+                                            console.log('Sending process_audio message');
+                                            wsConnection.send(JSON.stringify({
+                                                type: 'process_audio'
+                                            }));
+                                        }
+                                    }, 100);
+                                }
+                            };
+                            reader.readAsDataURL(event.data);
+                        }
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('record-btn').classList.add('recording');
+                    document.getElementById('recording-status').textContent = 'Recording... Click to stop';
+                } catch (error) {
+                    document.getElementById('voice-input').value = `Error accessing microphone: ${error.message}`;
+                }
+            } else {
+                if (mediaRecorder) {
+                    mediaRecorder.stop();
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+                isRecording = false;
+                document.getElementById('record-btn').classList.remove('recording');
+                document.getElementById('recording-status').textContent = 'Click to start recording';
+            }
+        }
+
+
+
+        // Corpus functions
+        async function uploadDocument() {
+            if (!authToken) {
+                document.getElementById('corpus-result').innerHTML = `<div class="result error">Please login first to upload documents.</div>`;
+                return;
+            }
+            
+            const title = document.getElementById('doc-title').value;
+            const content = document.getElementById('doc-content').value;
+            
+            try {
+                const response = await fetch('http://localhost:8000/corpus/doc', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ title, text: content, source: "web-ui" })
+                });
+                
+                const data = await response.json();
+                document.getElementById('corpus-result').innerHTML = `<div class="result success">${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                document.getElementById('corpus-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function searchDocuments() {
+            if (!authToken) {
+                document.getElementById('corpus-result').innerHTML = `<div class="result error">Please login first to search documents.</div>`;
+                return;
+            }
+            
+            const query = document.getElementById('search-query').value || "policy";
+            
+            try {
+                const response = await fetch('http://localhost:8000/corpus/search', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const data = await response.json();
+                document.getElementById('corpus-result').innerHTML = `<div class="result success">${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                document.getElementById('corpus-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function listDocuments() {
+            if (!authToken) {
+                document.getElementById('corpus-result').innerHTML = `<div class="result error">Please login first to list documents.</div>`;
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/corpus/docs', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                document.getElementById('corpus-result').innerHTML = `<div class="result success">${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                document.getElementById('corpus-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Admin functions
+        async function getSystemMetrics() {
+            try {
+                const response = await fetch('http://localhost:8000/metrics');
+                const data = await response.text();
+                document.getElementById('admin-result').innerHTML = `<div class="result success">${data}</div>`;
+            } catch (error) {
+                document.getElementById('admin-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function getUserStats() {
+            if (!authToken) {
+                document.getElementById('admin-result').innerHTML = `<div class="result error">Please login first to get user stats.</div>`;
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/admin/system-status', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                document.getElementById('admin-result').innerHTML = `<div class="result success">${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                document.getElementById('admin-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function getServiceLogs() {
+            if (!authToken) {
+                document.getElementById('admin-result').innerHTML = `<div class="result error">Please login first to get service logs.</div>`;
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/admin/organizations', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                document.getElementById('admin-result').innerHTML = `<div class="result success">${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                document.getElementById('admin-result').innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Initialize page
+        window.onload = function() {
+            // Check system health on load
+            checkSystemHealth();
+        };
+    </script>
+</body>
+</html>

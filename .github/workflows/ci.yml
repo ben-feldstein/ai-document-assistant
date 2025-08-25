@@ -1,0 +1,240 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Backend Testing
+  backend-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.12]
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-py312.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-py312.txt
+        pip install pytest pytest-cov pytest-asyncio
+    
+    - name: Run backend tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        JWT_SECRET: test-secret-key
+        OPENAI_API_KEY: test-key
+      run: |
+        cd api
+        pytest --cov=api --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./api/coverage.xml
+        flags: backend
+        name: backend-coverage
+
+  # Frontend Testing
+  frontend-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: modern-ui/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd modern-ui
+        npm ci
+    
+    - name: Run linting
+      run: |
+        cd modern-ui
+        npm run lint
+    
+    - name: Run tests
+      run: |
+        cd modern-ui
+        npm test -- --coverage --watchAll=false
+    
+    - name: Build application
+      run: |
+        cd modern-ui
+        npm run build
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./modern-ui/coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
+
+  # Security Scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Bandit security scan
+      uses: python-security/bandit@v1.0.0
+      with:
+        args: -r api/ -f json -o bandit-report.json
+    
+    - name: Run Safety check
+      run: |
+        pip install safety
+        safety check --json --output safety-report.json
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  # Docker Build Test
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build and test Docker images
+      run: |
+        docker build -f infra/Dockerfile.api -t ai-doc-assistant-api:test .
+        docker build -f infra/Dockerfile.worker -t ai-doc-assistant-worker:test .
+        
+        # Test that containers can start
+        docker run --rm ai-doc-assistant-api:test python -c "import fastapi; print('FastAPI import successful')"
+        docker run --rm ai-doc-assistant-worker:test python -c "print('Worker container test successful')"
+
+  # Integration Test
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Start services
+      run: |
+        docker-compose -f infra/docker-compose.yml up -d postgres redis
+        
+        # Wait for services to be ready
+        sleep 10
+        
+        # Test database connection
+        docker run --rm --network host postgres:16 psql -h localhost -U user -d proxi -c "SELECT 1"
+    
+    - name: Run integration tests
+      run: |
+        cd api
+        python -m pytest tests/integration/ -v
+
+  # Deploy to Staging (on main branch)
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [integration-test]
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    
+    steps:
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your staging deployment logic here
+        # This could be deploying to a staging server, updating staging environment, etc.
+
+  # Performance Testing
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: [integration-test]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install k6
+      run: |
+        sudo gpg -k
+        sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+    
+    - name: Run performance tests
+      run: |
+        # Add your k6 performance test scripts here
+        echo "Performance testing completed"
+
+  # Notify on completion
+  notify:
+    runs-on: ubuntu-latest
+    needs: [performance-test]
+    if: always()
+    
+    steps:
+    - name: Notify completion
+      run: |
+        if [ "${{ needs.performance-test.result }}" == "success" ]; then
+          echo "✅ All tests passed successfully!"
+        else
+          echo "❌ Some tests failed. Check the logs above."
+        fi

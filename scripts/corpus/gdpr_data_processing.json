@@ -1,0 +1,14 @@
+{
+  "title": "GDPR Data Processing Requirements and Legal Bases",
+  "text": "The General Data Protection Regulation (GDPR) establishes six legal bases for processing personal data: consent, contract performance, legal obligation, vital interests, public task, and legitimate interests. Each basis has specific requirements and limitations that organizations must carefully consider before processing personal data.\n\nConsent must be freely given, specific, informed, and unambiguous. Organizations must demonstrate that consent was obtained and allow individuals to withdraw consent at any time. Consent cannot be bundled with other terms and conditions, and pre-ticked boxes are not considered valid consent.\n\nContract performance allows processing when necessary to fulfill a contract with the data subject. This basis is limited to processing that is essential for the contract and cannot be used for unrelated purposes. Organizations must ensure that the processing is proportionate and does not exceed what is necessary.\n\nLegal obligation processing is permitted when required by law or regulation. Organizations must identify the specific legal requirement and ensure that the processing is limited to what is necessary to comply with the obligation.\n\nVital interests processing is allowed when necessary to protect someone's life. This basis is typically used in emergency situations and is subject to strict limitations.\n\nPublic task processing applies to public authorities and organizations exercising official authority. The processing must be necessary for the performance of a task carried out in the public interest or in the exercise of official authority.\n\nLegitimate interests processing requires organizations to balance their interests against the fundamental rights and freedoms of data subjects. Organizations must conduct a legitimate interests assessment and implement appropriate safeguards.",
+  "source": "scripts/corpus/gdpr_data_processing.json",
+  "uri": "https://example.com/gdpr-data-processing-requirements",
+  "metadata": {
+    "jurisdiction": "European Union",
+    "topic": "Data Protection",
+    "target_audience": "Organizations",
+    "effective_date": "2018-05-25",
+    "document_type": "Regulation",
+    "keywords": ["GDPR", "data processing", "legal bases", "consent", "legitimate interests"]
+  }
+}

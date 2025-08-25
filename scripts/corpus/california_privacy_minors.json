@@ -1,0 +1,14 @@
+{
+  "title": "California Privacy Regulations for Minors - 2024 Updates",
+  "text": "The California Consumer Privacy Act (CCPA) and California Privacy Rights Act (CPRA) have been updated to provide enhanced protections for minors under the age of 16. Key changes include stricter consent requirements, expanded data deletion rights, and new safeguards against data profiling of minors.\n\nUnder the updated regulations, businesses must obtain explicit consent from both the minor and their parent or guardian before collecting, using, or selling personal information of minors under 16. This applies to all data collection activities, including website cookies, mobile app tracking, and online advertising.\n\nBusinesses are also prohibited from using personal information of minors for targeted advertising without explicit consent. Additionally, minors have the right to request deletion of their personal information at any time, and businesses must comply within 45 days of receiving the request.\n\nThe regulations also introduce new requirements for data brokers who collect information about minors, requiring them to maintain a registry and provide opt-out mechanisms for parents and guardians.\n\nPenalties for violations have been increased, with fines of up to $7,500 per intentional violation and $2,500 per unintentional violation. The California Privacy Protection Agency (CPPA) has been granted expanded enforcement authority to investigate and prosecute violations.",
+  "source": "scripts/corpus/california_privacy_minors.json",
+  "uri": "https://example.com/california-privacy-minors-2024",
+  "metadata": {
+    "jurisdiction": "California",
+    "topic": "Privacy",
+    "target_audience": "Minors",
+    "effective_date": "2024-01-01",
+    "document_type": "Regulation",
+    "keywords": ["privacy", "minors", "consent", "data deletion", "targeted advertising"]
+  }
+}

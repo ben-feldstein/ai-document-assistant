@@ -1,0 +1,63 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # AI Voice API
+  - job_name: 'ai-document-api'
+    static_configs:
+      - targets: ['api:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # AI Voice Worker (commented out until worker exposes metrics)
+  # - job_name: 'ai-document-worker'
+  #   static_configs:
+  #     - targets: ['worker:8001']
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 10s
+  #   scrape_timeout: 5s
+
+  # PostgreSQL (commented out - doesn't expose Prometheus metrics)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres:5432']
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 30s
+  #   scrape_timeout: 10s
+
+  # Redis (commented out - doesn't expose Prometheus metrics)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis:6379']
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 30s
+  #   scrape_timeout: 10s
+
+  # Node Exporter (commented out - service doesn't exist)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+  #   scrape_interval: 30s
+  #   scrape_timeout: 10s
+
+# Alerting rules
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Recording rules
+# rule_files:
+#   - "recording_rules.yml"
