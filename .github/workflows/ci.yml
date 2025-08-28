@@ -46,6 +46,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
+
+    
     - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
@@ -58,25 +60,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-py312.txt
-        pip install pytest pytest-cov pytest-asyncio
     
-    - name: Run backend tests
+    - name: Run CI tests (no external services required)
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        REDIS_URL: redis://localhost:6379/0
-        JWT_SECRET: test-secret-key
-        OPENAI_API_KEY: test-key
         MOCK_MODE: true
         MOCK_AI_RESPONSES: true
         MOCK_DOCUMENT_PROCESSING: true
       run: |
-        # Install test dependencies
-        pip install websocket-client
-        
-        # Run our existing test files
-        python test_api.py
-        python test_security.py
-        python test_voice.py
+        # Run CI-specific tests that don't require external services
+        python test_ci.py
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
