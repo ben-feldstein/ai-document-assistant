@@ -253,12 +253,11 @@ class OrchestratorService:
             # Generate LLM response
             response_text = ""
             try:
-                async for token in llm_service.stream_chat(
+                response_text = await llm_service.chat(
                     [{"role": "user", "content": request.text}],
                     context=search_results,
                     org_id=request.org_id
-                ):
-                    response_text += token
+                )
             except Exception as e:
                 response_text = f"Error generating response: {str(e)}"
             

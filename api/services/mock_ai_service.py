@@ -31,6 +31,21 @@ class MockAIService:
                 "From a technical perspective, this involves several key components including data processing, API integration, and system architecture considerations.",
                 "The technical implementation requires careful attention to performance optimization, error handling, and scalability factors.",
                 "This technical challenge can be approached through multiple methodologies, each with their own trade-offs and benefits."
+            ],
+            "policy": [
+                "Based on your organization's policy documents, I can see several key guidelines that apply to your question. The policies emphasize compliance, safety, and professional conduct.",
+                "Your company's policy framework addresses this topic through established procedures and guidelines. Key areas include risk management and quality assurance.",
+                "The policy documents outline specific requirements and best practices for this situation. It's important to follow the established protocols."
+            ],
+            "healthcare": [
+                "According to your healthcare organization's policies, patient privacy and HIPAA compliance are paramount. The documents emphasize secure handling of sensitive information.",
+                "Your healthcare policies outline specific protocols for patient care, safety measures, and regulatory compliance requirements.",
+                "The policy documents detail procedures for maintaining patient confidentiality and ensuring quality care standards."
+            ],
+            "technology": [
+                "Your technology development standards emphasize code quality, testing practices, and deployment procedures. The documents outline best practices for software development.",
+                "Based on your technical documentation, the approach should focus on scalability, maintainability, and security considerations.",
+                "Your development standards highlight the importance of following established patterns and maintaining consistent code quality."
             ]
         }
     
@@ -48,7 +63,10 @@ class MockAIService:
         
         # Add some context if provided
         if context:
-            response_text += f" Regarding the document content: {context[:100]}..."
+            # Extract key terms from context for more realistic responses
+            context_words = context.split()[:10]  # Take first 10 words
+            context_summary = " ".join(context_words)
+            response_text += f" Based on the document content about {context_summary}..."
         
         # Generate mock metadata
         mock_response = {
@@ -90,10 +108,14 @@ class MockAIService:
         """Classify message type for appropriate mock response"""
         message_lower = message.lower()
         
-        if any(word in message_lower for word in ["document", "file", "content", "text"]):
+        if any(word in message_lower for word in ["healthcare", "patient", "hipaa", "medical", "clinical"]):
+            return "healthcare"
+        elif any(word in message_lower for word in ["policy", "policies", "guidelines", "procedures", "rules"]):
+            return "policy"
+        elif any(word in message_lower for word in ["technical", "code", "implementation", "architecture", "development", "software"]):
+            return "technology"
+        elif any(word in message_lower for word in ["document", "file", "content", "text"]):
             return "document"
-        elif any(word in message_lower for word in ["technical", "code", "implementation", "architecture"]):
-            return "technical"
         else:
             return "general"
     

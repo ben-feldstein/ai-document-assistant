@@ -8,6 +8,12 @@ from openai import AsyncOpenAI
 import pybreaker
 from api.utils.config import get_openai_config, settings
 
+# Import mock service for development/testing
+try:
+    from api.services.mock_ai_service import MockAIService
+except ImportError:
+    MockAIService = None
+
 
 class LLMService:
     """Service for LLM interactions with fallback and circuit breaker."""
@@ -67,6 +73,28 @@ class LLMService:
             Token strings as they arrive
         """
         start_time = time.time()
+        
+        # Check if we should use mock mode
+        if settings.mock_mode and MockAIService:
+            print("🔧 Using mock AI service for chat")
+            mock_service = MockAIService()
+            
+            # Get the user's message
+            user_message = messages[-1]["content"] if messages else ""
+            
+            # Generate mock response with context
+            context_text = ""
+            if context:
+                context_text = " ".join([result.get("snippet", "")[:100] for result in context[:3]])
+            
+            mock_response = mock_service.generate_chat_response(user_message, context_text)
+            response_text = mock_response["response"]
+            
+            # Simulate streaming by yielding characters
+            for char in response_text:
+                yield char
+                await asyncio.sleep(0.01)  # Small delay to simulate streaming
+            return
         
         try:
             # Ensure we're connected
@@ -182,6 +210,46 @@ class LLMService:
         tokens_out = 0  # Would need to count actual tokens
         
         print(f"LLM Interaction - Input: {input_text[:100]}..., Latency: {latency_ms}ms, Org: {org_id}")
+    
+    async def chat(
+        self, 
+        messages: List[Dict[str, str]], 
+        context: Optional[List[Dict[str, Any]]] = None,
+        org_id: Optional[int] = None
+    ) -> str:
+        """
+        Non-streaming chat completion with context from search results.
+        
+        Args:
+            messages: List of message dictionaries
+            context: List of search results to include as context
+            org_id: Organization ID for logging
+            
+        Returns:
+            Complete response string
+        """
+        # Check if we should use mock mode
+        if settings.mock_mode and MockAIService:
+            print("🔧 Using mock AI service for chat")
+            mock_service = MockAIService()
+            
+            # Get the user's message
+            user_message = messages[-1]["content"] if messages else ""
+            
+            # Generate mock response with context
+            context_text = ""
+            if context:
+                context_text = " ".join([result.get("snippet", "")[:100] for result in context[:3]])
+            
+            mock_response = mock_service.generate_chat_response(user_message, context_text)
+            return mock_response["response"]
+        
+        # For real API calls, collect streaming response
+        response_text = ""
+        async for token in self.stream_chat(messages, context, org_id):
+            response_text += token
+        
+        return response_text
     
     async def get_models(self) -> List[Dict[str, Any]]:
         """Get available models from OpenAI."""

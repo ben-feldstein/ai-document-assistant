@@ -105,14 +105,19 @@ class APITester:
                 return result
             elif response.status_code == 400:
                 result = response.json()
-                if "already exists" in result.get("detail", "").lower():
-                    self.log_test("User Registration", True, f"User {email} already exists (success)")
+                detail = result.get("detail", "")
+                if "already exists" in detail.lower() or "already registered" in detail.lower():
+                    self.log_test("User Registration", True, f"User {email} already exists (expected for duplicate)")
                     return result
                 else:
                     self.log_test("User Registration", False, f"Bad request: {result}")
                     return None
+            elif response.status_code == 422:
+                result = response.json()
+                self.log_test("User Registration", False, f"Validation error: {result}")
+                return None
             else:
-                self.log_test("User Registration", False, f"Status code: {response.status_code}")
+                self.log_test("User Registration", False, f"Unexpected status code: {response.status_code}, Response: {response.text}")
                 return None
         except Exception as e:
             self.log_test("User Registration", False, f"Exception: {str(e)}")
@@ -251,11 +256,27 @@ class APITester:
     
     def test_websocket_connection(self):
         """Test WebSocket connection"""
+        if not self.auth_token:
+            self.log_test("WebSocket Connection", False, "No auth token available - skipping WebSocket test")
+            return False
+        
         try:
-            # Test basic connection
-            ws = websocket.create_connection(WS_URL, timeout=5)
+            # Test WebSocket connection with authentication
+            ws_url = f"ws://localhost:8000/ws/audio?session_id=test123&token={self.auth_token}"
+            ws = websocket.create_connection(ws_url, timeout=5)
+            
             if ws.connected:
-                self.log_test("WebSocket Connection", True, "WebSocket connected successfully")
+                # Send a test message
+                test_message = json.dumps({"type": "ping", "message": "test"})
+                ws.send(test_message)
+                
+                # Try to receive a response (with timeout)
+                try:
+                    response = ws.recv()
+                    self.log_test("WebSocket Connection", True, "WebSocket connected and communication successful")
+                except Exception as recv_error:
+                    self.log_test("WebSocket Connection", True, "WebSocket connected but no response received (may be expected)")
+                
                 ws.close()
                 return True
             else:
@@ -300,9 +321,18 @@ class APITester:
         self.test_root_endpoint()
         self.test_metrics_endpoint()
         
-        # Test authentication
-        self.test_user_registration("newuser2@test.com", "newpass123")
-        self.test_user_login()
+        # Test authentication with unique email
+        import time
+        unique_email = f"testuser{int(time.time())}@test.com"
+        print(f"🔐 Testing with unique email: {unique_email}")
+        
+        registration_result = self.test_user_registration(unique_email, "newpass123")
+        if registration_result:
+            login_result = self.test_user_login(unique_email, "newpass123")
+            if not login_result:
+                print("⚠️  Login failed, but continuing with other tests...")
+        else:
+            print("⚠️  Registration failed, but continuing with other tests...")
         
         # Test authenticated endpoints
         if self.auth_token:
@@ -312,9 +342,14 @@ class APITester:
             self.test_document_list()
             self.test_admin_endpoints()
             self.test_rate_limiting()
+        else:
+            print("⚠️  Skipping authenticated endpoint tests (no auth token)")
         
-        # Test WebSocket
-        self.test_websocket_connection()
+        # Test WebSocket (only if authenticated)
+        if self.auth_token:
+            self.test_websocket_connection()
+        else:
+            print("⚠️  Skipping WebSocket test (no auth token)")
         
         # Print summary
         self.print_summary()

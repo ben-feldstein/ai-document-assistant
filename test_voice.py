@@ -68,8 +68,27 @@ class VoiceTester:
         """Test WebSocket connection and basic messaging."""
         print("\n3. Testing WebSocket connection...")
         
+        # First, we need to get a valid JWT token by logging in
+        try:
+            login_data = {"email": "test@example.com", "password": "testpassword123"}
+            response = requests.post(f"{self.base_url}/auth/login", json=login_data)
+            if response.status_code != 200:
+                print("   ❌ Login failed, cannot test WebSocket without authentication")
+                return False
+            
+            auth_data = response.json()
+            token = auth_data.get("access_token")
+            if not token:
+                print("   ❌ No access token received from login")
+                return False
+            
+            print("   ✅ Got authentication token for WebSocket test")
+        except Exception as e:
+            print(f"   ❌ Login error: {e}")
+            return False
+        
         session_id = f"test-{int(time.time())}"
-        ws_url = f"ws://localhost:8000/ws/audio?session_id={session_id}"
+        ws_url = f"ws://localhost:8000/ws/audio?session_id={session_id}&token={token}"
         
         try:
             async with websockets.connect(ws_url) as websocket:
