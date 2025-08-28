@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Config files
+*.config.js
+*.config.ts
+vite.config.ts
+vitest.config.ts
+
+# Test files (optional - you can remove this if you want to lint tests)
+src/test/
+
+# Generated files
+*.d.ts
+
+# Environment files
+.env*
