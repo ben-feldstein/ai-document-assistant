@@ -13,8 +13,11 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://user:pass@postgres:5432/proxi
       - REDIS_URL=redis://redis:6379/0
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-openai-api-key-here}
+      - JWT_SECRET=${JWT_SECRET:-mock-jwt-secret-key-for-development-only-change-in-production-1234567890abcdef}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-mock-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef}
+      - MOCK_MODE=${MOCK_MODE:-true}
+      - MOCK_AI_RESPONSES=${MOCK_AI_RESPONSES:-true}
+      - MOCK_DOCUMENT_PROCESSING=${MOCK_DOCUMENT_PROCESSING:-true}
       - OPENAI_BASE_URL=https://api.openai.com/v1
       - STT_PROVIDER=whisper
       - DEBUG=false

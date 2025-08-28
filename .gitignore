@@ -277,13 +277,14 @@ logs
 .env.local
 .env.production
 .env.staging
-.env.*
 .env.backup
 secrets/
 *.pem
 *.key
 *.crt
-*.env
+
+# Mock files (safe to commit)
+!env.mock
 
 # Database
 *.db

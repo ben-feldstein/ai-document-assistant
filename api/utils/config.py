@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     jwt_expires_in: int = 3600
     jwt_refresh_expires_in: int = 86400
     
+    # Mock Mode Configuration
+    mock_mode: bool = Field(default=False, description="Enable mock mode for development/testing")
+    mock_ai_responses: bool = Field(default=False, description="Use mock AI responses instead of real API calls")
+    mock_document_processing: bool = Field(default=False, description="Use mock document processing for testing")
+    
     # OpenAI/LLM Configuration
     openai_base_url: Optional[str] = None
     openai_api_key: Optional[str] = None
